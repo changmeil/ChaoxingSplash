@@ -1,0 +1,26 @@
+# 构建产物
+build/
+dist/
+*.apk
+*.idsig
+!app/src/main/assets/*.apk
+
+# 工具链（tools/setup_sdk.sh 下载）
+sdk/
+
+# 签名
+*.keystore
+*.jks
+
+# 调试产物
+shots/
+*.mp4
+__pycache__/
+*.pyc
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

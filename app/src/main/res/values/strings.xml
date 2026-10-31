@@ -1,0 +1,39 @@
+<resources>
+    <string name="app_name">学习通开屏替换</string>
+    <string name="header_title">学习通开屏替换</string>
+    <string name="header_desc">把学习通开屏页的「学习是一种信仰」换成你自己的图片。点下面「选择图片」即可，无需重新打包。</string>
+
+    <string name="section_target">作用对象</string>
+    <string name="section_resource">替换资源</string>
+    <string name="section_api">模块 API</string>
+    <string name="target_app">学习通</string>
+    <string name="target_pkg">com.chaoxing.mobile</string>
+    <string name="target_res">drawable/splash · drawable/splash_1080</string>
+    <string name="target_api">libxposed API 102</string>
+
+    <string name="section_usage">使用步骤</string>
+    <string name="usage">1. 在 LSPosed 中启用模块，作用域勾选「学习通」+「系统框架」+「系统界面」；
+2. 本页点「选择图片」挑一张图（会自动压缩保存）；
+3. 强制停止学习通再打开，开屏从第一帧起就是你的图。</string>
+
+    <string name="section_note">说明</string>
+    <string name="note">• 图片等比缩放、居中显示，不裁切不变形，四周留白用图片边缘色（不一致时为白色）填充；
+• 「系统界面」作用域是给 HyperOS 用的：启动窗口的首帧由它渲染，不勾会先闪一下原图；
+• 若学习通版本更新后开屏资源改名，日志（标签 CxSplash）中会显示实际加载的资源，可据此调整；
+• 本模块仅修改本地展示图片，不修改应用本体，也不联网。</string>
+
+    <string name="version_fmt">版本 %1$s</string>
+    <string name="device_fmt">当前设备：%1$s · Android %2$s</string>
+    <string name="preview_label">当前替换图</string>
+    <string name="btn_pick">选择图片</string>
+    <string name="btn_reset">恢复内置图</string>
+    <string name="pick_title">选择开屏图</string>
+    <string name="pick_failed">打不开图片选择器</string>
+    <string name="saved_ok">已保存，重启学习通后生效</string>
+    <string name="saved_failed">保存失败：%1$s</string>
+    <string name="reset_ok">已恢复内置图片</string>
+    <string name="reset_none">当前用的就是内置图片</string>
+    <string name="source_custom">当前：自定义图片（%1$d KB · %2$d×%3$d）</string>
+    <string name="source_builtin">当前：模块内置图片（assets/splash.jpg）</string>
+    <string name="pick_hint">图片会压缩到长边 ≤2400px 后存到 Android/media/com.meili.chaoxingsplash/，学习通与系统界面都能读到。换图后需重启学习通。</string>
+</resources>
