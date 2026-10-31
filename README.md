@@ -9,6 +9,8 @@
 - 显示方式：等比缩放 + 居中留白（fit-center），不裁切、不变形
 - 换图：装好后在模块界面点「选择图片」即可，**不需要重新打包**
 
+[**下载最新版 APK**](https://github.com/changmeil/ChaoxingSplash/releases/latest)　·　需要 LSPosed 2.x
+
 ---
 
 ## 一、为什么不是"改个图层"那么简单
