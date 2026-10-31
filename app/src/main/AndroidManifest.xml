@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.meili.chaoxingsplash"
-    android:versionCode="19"
-    android:versionName="1.9.2">
+    android:versionCode="20"
+    android:versionName="1.9.3">
 
     <uses-sdk
         android:minSdkVersion="26"
-        android:targetSdkVersion="35" />
+        android:targetSdkVersion="34" />
 
     <application
         android:allowBackup="false"

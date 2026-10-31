@@ -19,8 +19,8 @@ for j in "$LIBS" "$LIB_SERVICE" "$LIB_INTERFACE"; do
   [ -f "$j" ] || { echo "缺依赖 $j：先跑 bash tools/setup_sdk.sh"; exit 1; }
 done
 OUT=build
-NAME="学习通开屏替换-1.9.2"
-VERSION="1.9.2"
+NAME="学习通开屏替换-1.9.3"
+VERSION="1.9.3"
 
 command -v javac >/dev/null || { echo "need JDK"; exit 1; }
 
@@ -38,7 +38,7 @@ echo "==> 2/7 aapt2 link"
   -A app/src/main/assets \
   --java "$OUT/gen" \
   --min-sdk-version 26 \
-  --target-sdk-version 35 \
+  --target-sdk-version 34 \
   --auto-add-overlay \
   "$OUT/res.zip"
 
@@ -73,7 +73,11 @@ if [ ! -f debug.keystore ]; then
     -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
     -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
 fi
+# v1 在 minSdk>=24 时会被 apksigner 忽略（v2 已足够），保留参数只为兼容旧工具链；
+# v4 会额外产出 .idsig 附属文件，转发时容易被当成"还要装第二个包"，故关闭。
 java -jar "$BT/lib/apksigner.jar" sign \
+  --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
+  --v4-signing-enabled false \
   --ks debug.keystore --ks-pass pass:android --key-pass pass:android \
   --ks-key-alias androiddebugkey \
   --out "dist/$NAME.apk" "$OUT/app-aligned.apk"

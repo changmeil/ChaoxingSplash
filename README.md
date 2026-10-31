@@ -103,6 +103,29 @@ dy    = (boundH - bmpH * scale) / 2         // 垂直居中
 > 升级模块时注意：LSPosed 只在**首次安装**时读取 APK 里的 `scope.list`，
 > 覆盖安装不会刷新已登记的作用域；`staticScope=false` 意味着作用域以你在管理器里勾的为准。
 
+### 系统兼容性
+
+| 项 | 值 |
+| --- | --- |
+| `minSdkVersion` | 26（Android 8.0） |
+| `targetSdkVersion` | 34（Android 14） |
+| native 库 | 无（纯 Java/dex，与 CPU 架构无关） |
+| 签名 | APK Signature Scheme v2 + v3 |
+
+Android 8.0 ~ 16 都能装，**Android 15 完全可用**（本项目就是在 HyperOS 3 / Android 16 上验证的）。
+`targetSdk` 刻意停在 34 而不是 35：部分小米/HyperOS 安装器会以
+`-124 该安装包与您的系统不兼容` 拒绝未在应用商店登记的 `targetSdk=35` 包。
+
+### 如果装不上
+
+| 现象 | 处理 |
+| --- | --- |
+| 小米提示 `安装失败(-124) 该安装包与您的系统不兼容` | 先用 v1.9.3+（`targetSdk` 已降到 34）。仍失败则关掉「纯净模式」（设置 → 应用设置 → 应用管理 → 右上角设置 → 纯净模式），或用 MT 管理器/第三方安装器打开 APK |
+| 提示「解析软件包出错」 | 文件传输损坏，重新发送。核对字节数（1.9.3 为 124098 字节） |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | 设备上有另一签名的同包名旧版，先卸载 `com.meili.chaoxingsplash` |
+| `INSTALL_FAILED_USER_RESTRICTED` | HyperOS 限制 adb 安装：把 APK 放到手机里用文件管理器点开装 |
+| 装上了但没效果 | 检查作用域三项是否勾全 + 是否重启过手机；见「七、排查」 |
+
 ---
 
 ## 四、换图
