@@ -19,8 +19,8 @@ for j in "$LIBS" "$LIB_SERVICE" "$LIB_INTERFACE"; do
   [ -f "$j" ] || { echo "缺依赖 $j：先跑 bash tools/setup_sdk.sh"; exit 1; }
 done
 OUT=build
-NAME="学习通开屏替换-1.9.3"
-VERSION="1.9.3"
+NAME="学习通开屏替换-1.9.4"
+VERSION="1.9.4"
 
 command -v javac >/dev/null || { echo "need JDK"; exit 1; }
 
