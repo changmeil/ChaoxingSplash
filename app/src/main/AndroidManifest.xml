@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.meili.chaoxingsplash"
-    android:versionCode="10"
-    android:versionName="1.8.0">
+    android:versionCode="19"
+    android:versionName="1.9.2">
 
     <uses-sdk
         android:minSdkVersion="26"
@@ -30,6 +30,20 @@
                 <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
             </intent-filter>
         </activity>
+
+        <!-- libxposed-service 的 Binder 入口：LSPosed 用 call("sendBinder") 把 IXposedService
+             投递进来，模块才能把配置写进 LSPosed 数据库（getRemotePreferences 的另一端）。
+             aapt2 手工打包不会合并 aar 的 manifest，所以必须在这里显式声明，
+             否则日志里会出现 "No provider info for content provider ...XposedService"。 -->
+        <provider
+            android:name="io.github.libxposed.service.XposedProvider"
+            android:authorities="com.meili.chaoxingsplash.XposedService"
+            android:exported="true" />
+
+        <!-- 兜底：允许模块用 MODE_WORLD_READABLE 写一份文件给老式 XSharedPreferences 读 -->
+        <meta-data
+            android:name="xposedsharedprefs"
+            android:value="true" />
     </application>
 
 </manifest>

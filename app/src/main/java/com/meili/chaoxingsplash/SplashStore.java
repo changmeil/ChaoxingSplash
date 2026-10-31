@@ -27,6 +27,10 @@ public final class SplashStore {
     private static final String[] ROOTS = {"/storage/emulated/0", "/sdcard", "/data/media/0"};
 
     private static final int MAX_EDGE = 2400;
+    /** 自定义图的远程偏好（XposedModule#getRemotePreferences 可读，跨进程） */
+    public static final String PREFS = "cx_splash";
+    public static final String KEY_B64 = "b64";
+    public static final String KEY_TIME = "time";
 
     private SplashStore() {
     }
@@ -88,6 +92,19 @@ public final class SplashStore {
             }
         }
         return removed;
+    }
+
+    /** 诊断用：宿主进程里每个候选路径的可读状态 */
+    public static String debugInfo() {
+        StringBuilder sb = new StringBuilder();
+        for (File f : candidates()) {
+            sb.append(f.getAbsolutePath())
+              .append("[e=").append(f.exists())
+              .append(",r=").append(f.canRead())
+              .append(",l=").append(f.length())
+              .append("] ");
+        }
+        return sb.toString();
     }
 
     /** 文件指纹，用于在宿主进程里判断自定义图是否已被替换（避免重启才生效） */

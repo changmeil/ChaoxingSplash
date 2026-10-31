@@ -64,6 +64,14 @@
    用进程名识别 SystemUI；`onSystemServerStarting()` 作为系统侧的标准入口
    （关键服务启动前触发，早于任何启动窗口）。
 
+4. **配置通道** — 模块 App 声明 `io.github.libxposed.service.XposedProvider`
+   （authority `com.meili.chaoxingsplash.XposedService`），LSPosed 用它把 `IXposedService`
+   投递进来；App 侧 `XposedService#getRemotePreferences()` 写、Hook 侧
+   `XposedInterface#getRemotePreferences()` 读，同一份数据存在 LSPosed 库里，不碰文件系统。
+
+   > 用 aapt2 手工打包**不会合并 aar 的 manifest**，这个 provider 必须手写在
+   > `AndroidManifest.xml` 里，否则会看到 `No provider info for content provider ...XposedService`。
+
 保护措施：`exceptionMode=protective`、intercept 内整体 try/catch、任何异常都 `proceed()` 走原逻辑，
 因此即使宿主资源结构变化，也只会"不生效"，不会让宿主崩溃。
 
@@ -100,16 +108,23 @@ dy    = (boundH - bmpH * scale) / 2         // 垂直居中
 ## 四、换图
 
 **方法一（推荐，不用重装）**：打开模块界面 → 点「选择图片」→ 选图 → 重启学习通。
-图片会自动压缩到长边 ≤ 2400px，转成 JPEG 存到：
 
-```
-/storage/emulated/0/Android/media/com.meili.chaoxingsplash/custom_splash.jpg
-```
+选中的图会同时写两份，因为**写图的是模块进程，读图的是另外三个进程**：
 
-放在这个目录是因为**写图的是模块进程，读图的是学习通 / SystemUI 进程**：
-模块私有目录（`/data/data/.../files`，0700 + SELinux）别的进程读不到，
-而 `Android/media/<包名>/` 既不需要申请权限就能写，又能被其他进程读取。
-读取失败时会自动回退到内置图，不会白屏。
+| 通道 | 位置 | 谁在用 |
+|---|---|---|
+| 落盘文件 | `Android/media/com.meili.chaoxingsplash/custom_splash.jpg` | SystemUI（读得到外部存储） |
+| LSPosed 远程配置 | LSPosed 数据库（base64，长边 ≤ 1280px） | 学习通进程（读不到外部存储，走 binder） |
+
+两条通道任一命中即可，都读不到时回退到 APK 内置图，不会白屏。
+
+- 落盘那份不需要任何存储权限（`Android/media/<包名>/`），但学习通进程受分区存储限制看不见它；
+- 远程配置走 `libxposed-service` 的 `XposedProvider` → `IXposedService`，
+  模块侧 `getRemotePreferences()` 写、Hook 侧 `getRemotePreferences()` 读，完全绕开文件权限。
+
+> 第一次设置图片后，如果开屏还是旧的：**重启一次手机**（或 `am crash com.android.systemui`）。
+> SystemUI 是常驻进程，它在图片文件出现之前启动的话会缓存「该目录是空的」。
+> 之后换图即时生效，不用再重启。
 
 **方法二（改内置图，适合做发行版）**：
 
@@ -189,6 +204,8 @@ bash build.sh               # 产物在 dist/
 | 留白颜色不对 | `MARGIN_BLEND_CORNERS = false` 固定白色 |
 | 图四周有细线 | 原图最外圈自带 5~8px 描边，裁掉再换即可 |
 | 选好的图不生效 | 换图后要**重启学习通**（进程内 bitmap 有缓存，按文件指纹失效） |
+| 模块界面提示"没连上 LSPosed" | `XposedProvider` 没收到 Binder：确认模块已启用；老版本 LSPosed 可能要求把「学习通开屏替换」自己也在作用域里勾上 |
+| 日志有 `No provider info ... XposedService` | 同上，是 APK 里缺 `io.github.libxposed.service.XposedProvider` 声明（手工打包没做 manifest 合并导致的，1.9.2 已修） |
 
 ---
 

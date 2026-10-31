@@ -1,6 +1,7 @@
 package com.meili.chaoxingsplash;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.util.TypedValue;
 import android.graphics.Bitmap;
@@ -67,6 +68,8 @@ public class SplashModule extends XposedModule {
     private boolean bitmapLoaded;
     /** 自定义图的文件指纹，变了就重新解码（换图后不必重启模块所在进程之外的东西） */
     private String bitmapStamp;
+    /** 诊断用：每个进程只打一次“没找到自定义图” */
+    private boolean prefsTried;
     private int[] splashIds;
     private String[] splashNames;
     private boolean idsResolved;
@@ -568,7 +571,7 @@ public class SplashModule extends XposedModule {
      * 没有则回退到模块 APK 内置的 assets/splash.jpg。
      */
     private Bitmap loadBitmap() {
-        final String stamp = SplashStore.stamp();
+        final String stamp = stamp();
         if (bitmapLoaded && stamp.equals(bitmapStamp) && bitmap != null) return bitmap;
         synchronized (lock) {
             if (bitmapLoaded && stamp.equals(bitmapStamp) && bitmap != null) return bitmap;
@@ -576,9 +579,20 @@ public class SplashModule extends XposedModule {
             bitmapLoaded = true;
             bitmap = SplashStore.loadCustom();
             if (bitmap != null) {
-                log(Log.INFO, TAG, "custom bitmap loaded: " + stamp + " -> "
+                log(Log.INFO, TAG, "custom bitmap loaded (file): " + stamp + " -> "
                         + bitmap.getWidth() + "x" + bitmap.getHeight());
                 return bitmap;
+            }
+            bitmap = loadFromPrefs();
+            if (bitmap != null) {
+                log(Log.INFO, TAG, "custom bitmap loaded (prefs): " + stamp + " -> "
+                        + bitmap.getWidth() + "x" + bitmap.getHeight());
+                return bitmap;
+            }
+            if (!prefsTried) {
+                prefsTried = true;
+                log(Log.WARN, TAG, "no custom splash (file: " + SplashStore.debugInfo()
+                        + ", prefs time=" + prefsTime() + "), fallback to built-in asset");
             }
             ZipFile zip = null;
             InputStream in = null;
@@ -602,6 +616,61 @@ public class SplashModule extends XposedModule {
             }
             return bitmap;
         }
+    }
+
+    /** 缓存指纹：文件属性 + 远程偏好时间戳，任一变化就重新解码 */
+    private String stamp() {
+        long t = prefsTime();
+        String file = SplashStore.stamp();
+        return (t == 0 && "asset".equals(file)) ? "asset" : file + "|" + t;
+    }
+
+    /** 模块界面写入的时间戳；0 表示没设过自定义图 */
+    private long prefsTime() {
+        try {
+            SharedPreferences rp = remotePrefs();
+            return rp == null ? 0L : rp.getLong(SplashStore.KEY_TIME, 0L);
+        } catch (Throwable ignored) {
+            return 0L;
+        }
+    }
+
+    /**
+     * 从 RemotePreferences 里取自定义图。
+     * 宿主进程常常读不到外部存储（Scoped Storage / SELinux），这条通道走 LSPosed 的 binder，
+     * 不依赖文件系统权限。
+     */
+    private Bitmap loadFromPrefs() {
+        try {
+            SharedPreferences rp = remotePrefs();
+            if (rp == null) return null;
+            String b64 = rp.getString(SplashStore.KEY_B64, null);
+            if (b64 == null || b64.isEmpty()) return null;
+            byte[] raw = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+            if (raw == null || raw.length == 0) return null;
+            return BitmapFactory.decodeByteArray(raw, 0, raw.length);
+        } catch (Throwable t) {
+            log(Log.WARN, TAG, "load custom from prefs failed: " + t);
+            return null;
+        }
+    }
+
+    /**
+     * getRemotePreferences 在长驻进程（system_server / SystemUI）里拿到的是**启动时的快照**，
+     * 模块那边后来写入的新值看不到。LSPosed 的实现继承自 XSharedPreferences，
+     * 有 reload() 可以重新读盘，反射调一下（没有就保持原样，不影响功能）。
+     */
+    private SharedPreferences remotePrefs() {
+        SharedPreferences rp = getRemotePreferences(SplashStore.PREFS);
+        if (rp == null) return null;
+        try {
+            java.lang.reflect.Method reload = rp.getClass().getMethod("reload");
+            reload.setAccessible(true);
+            reload.invoke(rp);
+        } catch (Throwable ignored) {
+            // 没有 reload()：说明框架每次都返回新对象，不需要重载
+        }
+        return rp;
     }
 
     private static void closeQuietly(java.io.Closeable closeable) {

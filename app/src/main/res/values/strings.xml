@@ -30,6 +30,7 @@
     <string name="pick_title">选择开屏图</string>
     <string name="pick_failed">打不开图片选择器</string>
     <string name="saved_ok">已保存，重启学习通后生效</string>
+    <string name="saved_local_only">已保存，但没连上 LSPosed（模块未启用或作用域没勾？），Hook 进程读不到这张图</string>
     <string name="saved_failed">保存失败：%1$s</string>
     <string name="reset_ok">已恢复内置图片</string>
     <string name="reset_none">当前用的就是内置图片</string>

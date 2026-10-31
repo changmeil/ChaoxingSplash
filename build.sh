@@ -13,9 +13,14 @@ ZIPALIGN="$BT/zipalign$EXE"
 [ -f "$AAPT2" ] || { echo "找不到 aapt2：先跑 bash tools/setup_sdk.sh，或用 SDK=... 指定"; exit 1; }
 PLATFORM="$SDK/pf/android-35/android.jar"
 LIBS="$SDK/libx/classes.jar"
+LIB_SERVICE="$SDK/libxs/classes.jar"
+LIB_INTERFACE="$SDK/libxi/classes.jar"
+for j in "$LIBS" "$LIB_SERVICE" "$LIB_INTERFACE"; do
+  [ -f "$j" ] || { echo "缺依赖 $j：先跑 bash tools/setup_sdk.sh"; exit 1; }
+done
 OUT=build
-NAME="学习通开屏替换-1.8.0"
-VERSION="1.8.0"
+NAME="学习通开屏替换-1.9.2"
+VERSION="1.9.2"
 
 command -v javac >/dev/null || { echo "need JDK"; exit 1; }
 
@@ -42,17 +47,19 @@ javac --release 17 -nowarn -d "$OUT/stub" $(find stub -name '*.java')
 
 echo "==> 4/7 javac"
 javac --release 17 -nowarn -encoding UTF-8 \
-  -classpath "$PLATFORM;$LIBS;$OUT/stub" \
+  -classpath "$PLATFORM;$LIBS;$LIB_SERVICE;$LIB_INTERFACE;$OUT/stub" \
   -d "$OUT/classes" \
   $(find app/src/main/java "$OUT/gen" -name '*.java')
 
 echo "==> 5/7 d8 -> classes.dex"
+# 把 libxposed-service / -interface 一起 dex 进来（手工构建没有 AGP 帮忙合并依赖）
 java -cp "$BT/lib/d8.jar" com.android.tools.r8.D8 \
   --release --min-api 26 \
   --lib "$PLATFORM" \
   --classpath "$LIBS" \
   --output "$OUT/dex" \
-  $(find "$OUT/classes" -name '*.class')
+  $(find "$OUT/classes" -name '*.class') \
+  "$LIB_SERVICE" "$LIB_INTERFACE"
 
 echo "==> 6/7 打包 dex 与 META-INF/xposed"
 python tools/package.py "$OUT/app-unsigned.apk" "$OUT/dex/classes.dex" \

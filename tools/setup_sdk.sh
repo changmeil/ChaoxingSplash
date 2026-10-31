@@ -15,6 +15,8 @@ case "$(uname -s)" in
 esac
 PLATFORM="platform-35_r02.zip"
 LIBXPOSED="https://repo1.maven.org/maven2/io/github/libxposed/api/102.0.0/api-102.0.0.aar"
+LIBXPOSED_SVC="https://repo1.maven.org/maven2/io/github/libxposed/service/102.0.0/service-102.0.0.aar"
+LIBXPOSED_IFACE="https://repo1.maven.org/maven2/io/github/libxposed/interface/102.0.0/interface-102.0.0.aar"
 
 fetch() {
   local url="$1" out="$2"
@@ -27,6 +29,8 @@ fetch() {
 fetch "https://dl.google.com/android/repository/$BT" "$BT"
 fetch "https://dl.google.com/android/repository/$PLATFORM" "$PLATFORM"
 fetch "$LIBXPOSED" "libxposed-api.aar"
+fetch "$LIBXPOSED_SVC" "libxposed-service.aar"
+fetch "$LIBXPOSED_IFACE" "libxposed-interface.aar"
 
 echo "==> 解压 build-tools"
 rm -rf bt && mkdir -p bt
@@ -42,9 +46,18 @@ rm -rf libx && mkdir -p libx
 unzip -q -o libxposed-api.aar -d libx
 [ -f libx/classes.jar ] || { echo "libxposed 解压异常：找不到 classes.jar"; exit 1; }
 
+# service / interface：模块 App 侧通过 XposedProvider 拿 Binder，再写远程配置
+rm -rf libxs libxi && mkdir -p libxs libxi
+unzip -q -o libxposed-service.aar -d libxs
+unzip -q -o libxposed-interface.aar -d libxi
+[ -f libxs/classes.jar ] || { echo "libxposed-service 解压异常"; exit 1; }
+[ -f libxi/classes.jar ] || { echo "libxposed-interface 解压异常"; exit 1; }
+
 echo
 echo "完成：$SDK_DIR"
 echo "  bt/android-15/   build-tools 35"
 echo "  pf/android-35/   platform 35"
-echo "  libx/classes.jar libxposed api 102"
+echo "  libx/classes.jar  libxposed api 102"
+echo "  libxs/classes.jar libxposed service 102"
+echo "  libxi/classes.jar libxposed interface 102"
 echo "现在可以执行：bash build.sh"
