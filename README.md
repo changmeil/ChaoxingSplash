@@ -112,16 +112,20 @@ dy    = (boundH - bmpH * scale) / 2         // 垂直居中
 | native 库 | 无（纯 Java/dex，与 CPU 架构无关） |
 | 签名 | APK Signature Scheme v2 + v3 |
 
-Android 8.0 ~ 16 都能装，**Android 15 完全可用**（本项目就是在 HyperOS 3 / Android 16 上验证的）。
-`targetSdk` 刻意停在 34 而不是 35：部分小米/HyperOS 安装器会以
-`-124 该安装包与您的系统不兼容` 拒绝未在应用商店登记的 `targetSdk=35` 包。
+Android 8.0 ~ 16 都能装，**Android 15 完全可用**。
+
+> 手工打包（不走 Gradle）时极易踩的一个坑，已修复：`resources.arsc` 必须
+> **以 STORED 方式存放并 4 字节对齐**，否则 `targetSdk >= 30` 的设备会直接拒绝：
+> `-124: Failed parse during installPackageLI: Targeting R+ (version 30 and above)
+> requires the resources.arsc of installed APKs to be stored uncompressed and
+> aligned on a 4-byte boundary`。见 `tools/package.py` 与 `build.sh` 第 6/7 步。
 
 ### 如果装不上
 
 | 现象 | 处理 |
 | --- | --- |
-| 小米提示 `安装失败(-124) 该安装包与您的系统不兼容` | 先用 v1.9.3+（`targetSdk` 已降到 34）。仍失败则关掉「纯净模式」（设置 → 应用设置 → 应用管理 → 右上角设置 → 纯净模式），或用 MT 管理器/第三方安装器打开 APK |
-| 提示「解析软件包出错」 | 文件传输损坏，重新发送。核对字节数（1.9.3 为 124098 字节） |
+| 小米提示 `安装失败(-124) 该安装包与您的系统不兼容` | v1.9.3 及更早的包有 `resources.arsc` 被压缩的 bug，换 **v1.9.4+**。想确认原因可以 `adb install`，它会打印带 `-124:` 前缀的真实报错 |
+| 提示「解析软件包出错」 | 文件传输损坏，重新发送，核对字节数（1.9.4 为 173250 字节） |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | 设备上有另一签名的同包名旧版，先卸载 `com.meili.chaoxingsplash` |
 | `INSTALL_FAILED_USER_RESTRICTED` | HyperOS 限制 adb 安装：把 APK 放到手机里用文件管理器点开装 |
 | 装上了但没效果 | 检查作用域三项是否勾全 + 是否重启过手机；见「七、排查」 |
